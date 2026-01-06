@@ -34,6 +34,17 @@
         .event-pending { background-color: #ffc107; color: black; }
         .event-assigned { background-color: #198754; color: white; }
         .event-overdue { background-color: #dc3545; color: white; }
+
+        /* Filter bar styling */
+        .filter-bar {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
@@ -44,6 +55,17 @@
              alt="JRE Logo" 
              style="max-width: 300px; height: auto; margin-bottom: 20px;">
         <h1 style="color: #2c3e50; font-weight: bold;">JRE Bid Calendar</h1>
+    </div>
+
+    <!-- Status Filter -->
+    <div class="filter-bar">
+        <label for="statusFilter" class="form-label mb-0"><strong>Filter by Status:</strong></label>
+        <select id="statusFilter" class="form-select" style="width: auto;">
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="assigned">Assigned</option>
+            <option value="overdue">Overdue</option>
+        </select>
     </div>
 
     <!-- The Calendar -->
@@ -112,15 +134,16 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const calendarEl = document.getElementById('calendar');
+            const statusFilter = document.getElementById('statusFilter');
             
             const calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',  // Starts in Month view
+                initialView: 'dayGridMonth',
                 editable: true,
                 themeSystem: 'bootstrap5',
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,listWeek'  // These buttons let users switch views!
+                    right: 'dayGridMonth,timeGridWeek,listWeek'
                 },
                 buttonText: {
                     today: 'Today',
@@ -147,6 +170,21 @@
             });
             
             calendar.render();
+
+            // Status Filter Logic
+            statusFilter.addEventListener('change', function() {
+                const selectedStatus = this.value;
+                
+                calendar.getEvents().forEach(event => {
+                    const eventStatus = event.extendedProps.status || 'pending';
+                    
+                    if (selectedStatus === 'all' || eventStatus === selectedStatus) {
+                        event.setProp('display', 'auto');  // Show event
+                    } else {
+                        event.setProp('display', 'none');  // Hide event
+                    }
+                });
+            });
 
             const modal = new bootstrap.Modal(document.getElementById('projectModal'));
             const form = document.getElementById('projectForm');
@@ -209,6 +247,9 @@
                 calendar.addEvent(eventData);
                 saveEvents(calendar.getEvents());
                 modal.hide();
+
+                // Re-apply current filter after adding/updating
+                statusFilter.dispatchEvent(new Event('change'));
             });
 
             deleteBtn.addEventListener('click', function() {
@@ -218,12 +259,24 @@
                     if (event) event.remove();
                     saveEvents(calendar.getEvents());
                     modal.hide();
+                    
+                    // Re-apply filter after delete
+                    statusFilter.dispatchEvent(new Event('change'));
                 }
             });
 
             function loadEvents() {
                 const saved = localStorage.getItem('bidEvents');
-                return saved ? JSON.parse(saved) : [];
+                if (!saved) return [];
+                
+                const parsed = JSON.parse(saved);
+                return parsed.map(ev => ({
+                    id: ev.id,
+                    title: ev.title,
+                    start: ev.start,
+                    classNames: ev.classNames,
+                    extendedProps: ev.extendedProps
+                }));
             }
 
             function saveEvents(events) {
