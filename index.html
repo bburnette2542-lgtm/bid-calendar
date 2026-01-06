@@ -17,13 +17,7 @@
             background-color: #f8f9fa; 
             min-height: 100vh;
         }
-        
-        /* Container for better mobile control */
-        .container-main {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-        
+        .container-main { max-width: 1000px; margin: 0 auto; }
         #calendar { 
             background: white; 
             border-radius: 12px; 
@@ -31,17 +25,16 @@
             padding: 15px;
             margin-top: 20px;
         }
-        
-        .fc-button { 
-            border-radius: 8px !important; 
-            padding: 8px 12px !important;
-            font-size: 0.9rem;
-        }
-        
-        /* Priority borders */
-        .priority-high { border-left: 6px solid #dc3545 !important; }
-        .priority-medium { border-left: 6px solid #fd7e14 !important; }
-        .priority-low { border-left: 6px solid #198754 !important; }
+        .fc-button { border-radius: 8px !important; padding: 8px 12px !important; font-size: 0.9rem; }
+
+        /* Scope-colored left borders */
+        .scope-masonry { border-left: 6px solid #8B4513 !important; }      /* SaddleBrown */
+        .scope-caulking { border-left: 6px solid #FFD700 !important; }     /* Gold */
+        .scope-sidingtrim { border-left: 6px solid #4682B4 !important; }   /* SteelBlue */
+        .scope-eifs { border-left: 6px solid #9932CC !important; }         /* DarkOrchid */
+        .scope-repairs { border-left: 6px solid #DC143C !important; }       /* Crimson */
+        .scope-stone { border-left: 6px solid #708090 !important; }        /* SlateGray */
+        .scope-package { border-left: 6px solid #32CD32 !important; }      /* LimeGreen */
 
         /* Responsive Header */
         .header {
@@ -52,19 +45,8 @@
             margin-bottom: 20px;
             flex-wrap: wrap;
         }
-        .header img {
-            max-height: 70px;
-            width: auto;
-            flex-shrink: 0;
-        }
-        .header h1 {
-            margin: 0;
-            color: #2c3e50;
-            font-weight: bold;
-            font-size: 1.8rem;
-            flex-grow: 1;
-            text-align: center;
-        }
+        .header img { max-height: 70px; width: auto; flex-shrink: 0; }
+        .header h1 { margin: 0; color: #2c3e50; font-weight: bold; font-size: 1.8rem; flex-grow: 1; text-align: center; }
 
         /* Responsive Filter Bar */
         .filter-bar {
@@ -76,48 +58,19 @@
             margin: 15px 0;
             font-size: 0.95rem;
         }
-        .filter-bar select {
-            min-width: 130px;
-            font-size: 0.9rem;
-            padding: 8px;
-        }
+        .filter-bar select { min-width: 130px; font-size: 0.9rem; padding: 8px; }
 
-        /* Mobile-specific adjustments */
         @media (max-width: 768px) {
             body { padding: 10px; }
-            .header {
-                flex-direction: column;
-                text-align: center;
-                gap: 15px;
-            }
-            .header img {
-                max-height: 60px;
-            }
-            .header h1 {
-                font-size: 1.6rem;
-                text-align: center;
-            }
-            .filter-bar {
-                justify-content: center;
-                gap: 10px;
-            }
-            .filter-bar select {
-                width: 48%;
-                min-width: unset;
-            }
-            #calendar {
-                padding: 10px;
-                margin-top: 10px;
-            }
-            .fc-toolbar-title {
-                font-size: 1.2rem !important;
-            }
-            .fc-button {
-                padding: 6px 10px !important;
-                font-size: 0.85rem;
-            }
+            .header { flex-direction: column; text-align: center; gap: 15px; }
+            .header img { max-height: 60px; }
+            .header h1 { font-size: 1.6rem; }
+            .filter-bar { justify-content: center; gap: 10px; }
+            .filter-bar select { width: 48%; min-width: unset; }
+            #calendar { padding: 10px; margin-top: 10px; }
+            .fc-toolbar-title { font-size: 1.2rem !important; }
+            .fc-button { padding: 6px 10px !important; font-size: 0.85rem; }
         }
-
         @media (max-width: 480px) {
             .header h1 { font-size: 1.4rem; }
             .filter-bar select { width: 100%; }
@@ -130,14 +83,13 @@
 
     <div class="container-main">
 
-        <!-- Responsive Header -->
+        <!-- Header -->
         <div class="header">
-            <img src="https://raw.githubusercontent.com/bburnette2542-lgtm/bid-calendar/main/Logo.png" 
-                 alt="Company Logo">
+            <img src="https://raw.githubusercontent.com/bburnette2542-lgtm/bid-calendar/main/Logo.png" alt="Company Logo">
             <h1>Bid Calendar</h1>
         </div>
 
-        <!-- Responsive Filters -->
+        <!-- Filters (now with Scope) -->
         <div class="filter-bar">
             <span style="color: #555; font-weight: 600;">Show:</span>
             <select id="statusFilter" class="form-select form-select-sm">
@@ -149,6 +101,16 @@
             <select id="estimatorFilter" class="form-select form-select-sm">
                 <option value="all">All Estimators</option>
                 <option value="unassigned">Unassigned</option>
+            </select>
+            <select id="scopeFilter" class="form-select form-select-sm">
+                <option value="all">All Scopes</option>
+                <option value="masonry">Masonry</option>
+                <option value="caulking">Caulking</option>
+                <option value="sidingtrim">Siding & Trim</option>
+                <option value="eifs">EIFS</option>
+                <option value="repairs">Repairs</option>
+                <option value="stone">Stone</option>
+                <option value="package">Package</option>
             </select>
         </div>
 
@@ -170,11 +132,16 @@
                         <div class="mb-3"><label class="form-label">Project Title</label><input type="text" class="form-control" id="projectTitle" required></div>
                         <div class="mb-3"><label class="form-label">Due Date</label><input type="date" class="form-control" id="dueDate" required></div>
                         <div class="mb-3"><label class="form-label">Assign Estimators (comma-separated)</label><input type="text" class="form-control" id="estimators" placeholder="e.g., John Doe, Jane Smith"></div>
-                        <div class="mb-3"><label class="form-label">Priority</label>
-                            <select class="form-select" id="priority">
-                                <option value="medium">Medium</option>
-                                <option value="high">High</option>
-                                <option value="low">Low</option>
+                        <div class="mb-3">
+                            <label class="form-label">Scope(s) Bidding</label>
+                            <select class="form-select" id="scope">
+                                <option value="masonry">Masonry</option>
+                                <option value="caulking">Caulking</option>
+                                <option value="sidingtrim">Siding & Trim</option>
+                                <option value="eifs">EIFS</option>
+                                <option value="repairs">Repairs</option>
+                                <option value="stone">Stone</option>
+                                <option value="package">Package</option>
                             </select>
                         </div>
                         <div class="mb-3"><label class="form-label">ITB</label><textarea class="form-control" id="itb" rows="2"></textarea></div>
@@ -208,6 +175,7 @@
             const calendarEl = document.getElementById('calendar');
             const statusFilter = document.getElementById('statusFilter');
             const estimatorFilter = document.getElementById('estimatorFilter');
+            const scopeFilter = document.getElementById('scopeFilter');
             let allEstimators = new Set();
 
             const calendar = new FullCalendar.Calendar(calendarEl, {
@@ -220,7 +188,7 @@
                 eventBorderColor: '#2c3e50',
                 eventTextColor: '#ffffff',
                 height: 'auto',
-                aspectRatio: 1.35,  // Better for mobile
+                aspectRatio: 1.35,
                 nowIndicator: true,
                 events: loadEvents(),
                 dateClick: info => openModal(info.dateStr),
@@ -242,15 +210,18 @@
             function applyFilters() {
                 const statusVal = statusFilter.value;
                 const estVal = estimatorFilter.value;
+                const scopeVal = scopeFilter.value;
 
                 calendar.getEvents().forEach(event => {
                     const estList = (event.extendedProps.estimators || '').split(',').map(e => e.trim()).filter(e => e);
+                    const eventScope = event.extendedProps.scope || '';
                     const statusMatch = statusVal === 'all' || event.extendedProps.status === statusVal;
                     let estMatch = true;
                     if (estVal === 'unassigned') estMatch = estList.length === 0;
                     else if (estVal !== 'all') estMatch = estList.includes(estVal);
+                    const scopeMatch = scopeVal === 'all' || eventScope === scopeVal;
 
-                    event.setProp('display', (statusMatch && estMatch) ? 'auto' : 'none');
+                    event.setProp('display', (statusMatch && estMatch && scopeMatch) ? 'auto' : 'none');
                 });
             }
 
@@ -265,6 +236,7 @@
 
             statusFilter.addEventListener('change', applyFilters);
             estimatorFilter.addEventListener('change', applyFilters);
+            scopeFilter.addEventListener('change', applyFilters);
 
             const modal = new bootstrap.Modal(document.getElementById('projectModal'));
             const form = document.getElementById('projectForm');
@@ -278,14 +250,14 @@
                 if (event) {
                     document.getElementById('projectTitle').value = event.title;
                     document.getElementById('estimators').value = event.extendedProps.estimators || '';
-                    document.getElementById('priority').value = event.extendedProps.priority || 'medium';
+                    document.getElementById('scope').value = event.extendedProps.scope || 'masonry';
                     document.getElementById('itb').value = event.extendedProps.itb || '';
                     document.getElementById('rfi').value = event.extendedProps.rfi || '';
                     document.getElementById('plans').value = event.extendedProps.plans || '';
                     document.getElementById('status').value = event.extendedProps.status || 'pending';
                     deleteBtn.style.display = 'block';
                 } else {
-                    document.getElementById('priority').value = 'medium';
+                    document.getElementById('scope').value = 'masonry';
                     deleteBtn.style.display = 'none';
                 }
                 modal.show();
@@ -297,14 +269,14 @@
                 const start = document.getElementById('dueDate').value;
                 if (!title || !start) return alert('Title and Due Date required!');
 
-                const priority = document.getElementById('priority').value;
+                const scope = document.getElementById('scope').value;
 
                 const eventData = {
                     id, title, start,
-                    classNames: [`event-${document.getElementById('status').value}`, `priority-${priority}`],
+                    classNames: [`event-${document.getElementById('status').value}`, `scope-${scope}`],
                     extendedProps: {
                         estimators: document.getElementById('estimators').value.trim(),
-                        priority: priority,
+                        scope: scope,
                         itb: document.getElementById('itb').value.trim(),
                         rfi: document.getElementById('rfi').value.trim(),
                         plans: document.getElementById('plans').value.trim(),
