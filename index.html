@@ -38,12 +38,22 @@
         /* Filter bar styling */
         .filter-bar {
             max-width: 1000px;
-            margin: 20px auto;
+            margin: 20px auto 0;
             padding: 0 20px;
             display: flex;
             justify-content: flex-end;
             align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .filter-group {
+            display: flex;
+            align-items: center;
             gap: 10px;
+        }
+        .filter-group label {
+            margin-bottom: 0;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -57,15 +67,25 @@
         <h1 style="color: #2c3e50; font-weight: bold;">JRE Bid Calendar</h1>
     </div>
 
-    <!-- Status Filter -->
+    <!-- Filters -->
     <div class="filter-bar">
-        <label for="statusFilter" class="form-label mb-0"><strong>Filter by Status:</strong></label>
-        <select id="statusFilter" class="form-select" style="width: auto;">
-            <option value="all">All</option>
-            <option value="pending">Pending</option>
-            <option value="assigned">Assigned</option>
-            <option value="overdue">Overdue</option>
-        </select>
+        <div class="filter-group">
+            <label for="statusFilter">Status:</label>
+            <select id="statusFilter" class="form-select" style="width: auto;">
+                <option value="all">All</option>
+                <option value="pending">Pending</option>
+                <option value="assigned">Assigned</option>
+                <option value="overdue">Overdue</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="estimatorFilter">Estimator:</label>
+            <select id="estimatorFilter" class="form-select" style="width: auto;">
+                <option value="all">All Estimators</option>
+                <option value="unassigned">Unassigned</option>
+                <!-- Options will be populated dynamically -->
+            </select>
+        </div>
     </div>
 
     <!-- The Calendar -->
@@ -135,7 +155,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             const calendarEl = document.getElementById('calendar');
             const statusFilter = document.getElementById('statusFilter');
+            const estimatorFilter = document.getElementById('estimatorFilter');
             
+            let allEstimators = new Set(); // To track unique estimator names
+
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 editable: true,
@@ -171,20 +194,69 @@
             
             calendar.render();
 
-            // Status Filter Logic
-            statusFilter.addEventListener('change', function() {
-                const selectedStatus = this.value;
-                
+            // Populate estimator dropdown with existing names
+            function updateEstimatorOptions() {
+                const select = estimatorFilter;
+                // Clear existing options except the first two
+                while (select.options.length > 2) {
+                    select.remove(2);
+                }
+                // Sort and add unique names
+                const sorted = Array.from(allEstimators).sort((a, b) => a.localeCompare(b));
+                sorted.forEach(name => {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    select.appendChild(option);
+                });
+            }
+
+            // Apply both filters
+            function applyFilters() {
+                const selectedStatus = statusFilter.value;
+                const selectedEstimator = estimatorFilter.value;
+
                 calendar.getEvents().forEach(event => {
                     const eventStatus = event.extendedProps.status || 'pending';
+                    const eventEstimators = (event.extendedProps.estimators || '')
+                        .split(',')
+                        .map(e => e.trim())
+                        .filter(e => e);
+
+                    const matchesStatus = selectedStatus === 'all' || eventStatus === selectedStatus;
                     
-                    if (selectedStatus === 'all' || eventStatus === selectedStatus) {
-                        event.setProp('display', 'auto');  // Show event
+                    let matchesEstimator = true;
+                    if (selectedEstimator === 'unassigned') {
+                        matchesEstimator = eventEstimators.length === 0;
+                    } else if (selectedEstimator !== 'all') {
+                        matchesEstimator = eventEstimators.includes(selectedEstimator);
+                    }
+
+                    if (matchesStatus && matchesEstimator) {
+                        event.setProp('display', 'auto');
                     } else {
-                        event.setProp('display', 'none');  // Hide event
+                        event.setProp('display', 'none');
                     }
                 });
-            });
+            }
+
+            // Event listeners for filters
+            statusFilter.addEventListener('change', applyFilters);
+            estimatorFilter.addEventListener('change', applyFilters);
+
+            // Initial filter apply and estimator options
+            function refreshFiltersAndOptions() {
+                allEstimators.clear();
+                calendar.getEvents().forEach(event => {
+                    const ests = (event.extendedProps.estimators || '')
+                        .split(',')
+                        .map(e => e.trim())
+                        .filter(e => e);
+                    ests.forEach(est => allEstimators.add(est));
+                });
+                updateEstimatorOptions();
+                applyFilters();
+            }
 
             const modal = new bootstrap.Modal(document.getElementById('projectModal'));
             const form = document.getElementById('projectForm');
@@ -248,8 +320,8 @@
                 saveEvents(calendar.getEvents());
                 modal.hide();
 
-                // Re-apply current filter after adding/updating
-                statusFilter.dispatchEvent(new Event('change'));
+                // Refresh filters and estimator list
+                refreshFiltersAndOptions();
             });
 
             deleteBtn.addEventListener('click', function() {
@@ -260,8 +332,8 @@
                     saveEvents(calendar.getEvents());
                     modal.hide();
                     
-                    // Re-apply filter after delete
-                    statusFilter.dispatchEvent(new Event('change'));
+                    // Refresh filters and estimator list
+                    refreshFiltersAndOptions();
                 }
             });
 
@@ -292,7 +364,11 @@
 
             function updateEvent(event) {
                 saveEvents(calendar.getEvents());
+                refreshFiltersAndOptions();
             }
+
+            // Initial setup
+            refreshFiltersAndOptions();
         });
     </script>
 </body>
