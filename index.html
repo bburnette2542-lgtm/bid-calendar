@@ -3,95 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JRE Bid Calendar</title>
+    <title>Bid Calendar</title>
     
     <!-- FullCalendar CSS -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
-    
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background-color: #f8f9fa;
-        }
-        #calendar {
-            max-width: 1000px;
-            margin: 40px auto;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            padding: 20px;
-        }
-        .fc-button {
-            border-radius: 8px !important;
-        }
+        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f8f9fa; }
+        #calendar { max-width: 1000px; margin: 40px auto; background: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 20px; }
+        .fc-button { border-radius: 8px !important; }
         .event-pending { background-color: #ffc107; color: black; }
         .event-assigned { background-color: #198754; color: white; }
         .event-overdue { background-color: #dc3545; color: white; }
 
-        /* Filter bar styling */
+        /* Priority borders */
+        .priority-high { border-left: 5px solid #dc3545 !important; }
+        .priority-medium { border-left: 5px solid #fd7e14 !important; }
+        .priority-low { border-left: 5px solid #198754 !important; }
+
+        /* Header with logo left-aligned */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .header img {
+            max-height: 80px;
+            width: auto;
+        }
+        .header h1 {
+            margin: 0;
+            color: #2c3e50;
+            font-weight: bold;
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        /* Filter bar */
         .filter-bar {
             max-width: 1000px;
-            margin: 20px auto 0;
+            margin: 0 auto 20px;
             padding: 0 20px;
             display: flex;
             justify-content: flex-end;
             align-items: center;
-            gap: 20px;
+            gap: 12px;
             flex-wrap: wrap;
+            font-size: 0.95rem;
         }
-        .filter-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .filter-group label {
-            margin-bottom: 0;
-            font-weight: bold;
+        .filter-bar select {
+            min-width: 140px;
+            font-size: 0.9rem;
         }
     </style>
 </head>
 <body>
 
-    <!-- Logo and Title -->
-    <div style="text-align: center; margin-bottom: 30px;">
+    <!-- Header: Logo left, Title centered -->
+    <div class="header">
         <img src="https://raw.githubusercontent.com/bburnette2542-lgtm/bid-calendar/main/Logo.png" 
-             alt="JRE Logo" 
-             style="max-width: 300px; height: auto; margin-bottom: 20px;">
-        <h1 style="color: #2c3e50; font-weight: bold;">JRE Bid Calendar</h1>
+             alt="Company Logo">
+        <h1>Bid Calendar</h1>
     </div>
 
-    <!-- Filters -->
+    <!-- Concise Filters -->
     <div class="filter-bar">
-        <div class="filter-group">
-            <label for="statusFilter">Status:</label>
-            <select id="statusFilter" class="form-select" style="width: auto;">
-                <option value="all">All</option>
-                <option value="pending">Pending</option>
-                <option value="assigned">Assigned</option>
-                <option value="overdue">Overdue</option>
-            </select>
-        </div>
-        <div class="filter-group">
-            <label for="estimatorFilter">Estimator:</label>
-            <select id="estimatorFilter" class="form-select" style="width: auto;">
-                <option value="all">All Estimators</option>
-                <option value="unassigned">Unassigned</option>
-                <!-- Options will be populated dynamically -->
-            </select>
-        </div>
+        <span style="color: #555; font-weight: 600;">Show:</span>
+        <select id="statusFilter" class="form-select form-select-sm">
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="assigned">Assigned</option>
+            <option value="overdue">Overdue</option>
+        </select>
+        <select id="estimatorFilter" class="form-select form-select-sm">
+            <option value="all">All Estimators</option>
+            <option value="unassigned">Unassigned</option>
+        </select>
     </div>
 
-    <!-- The Calendar -->
+    <!-- Calendar -->
     <div id="calendar"></div>
 
-    <!-- Modal for Adding/Editing Projects -->
+    <!-- Modal -->
     <div class="modal fade" id="projectModal" tabindex="-1" aria-labelledby="projectModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -101,32 +99,20 @@
                 </div>
                 <div class="modal-body">
                     <form id="projectForm">
-                        <div class="mb-3">
-                            <label for="projectTitle" class="form-label">Project Title</label>
-                            <input type="text" class="form-control" id="projectTitle" required>
+                        <div class="mb-3"><label class="form-label">Project Title</label><input type="text" class="form-control" id="projectTitle" required></div>
+                        <div class="mb-3"><label class="form-label">Due Date</label><input type="date" class="form-control" id="dueDate" required></div>
+                        <div class="mb-3"><label class="form-label">Assign Estimators (comma-separated)</label><input type="text" class="form-control" id="estimators" placeholder="e.g., John Doe, Jane Smith"></div>
+                        <div class="mb-3"><label class="form-label">Priority</label>
+                            <select class="form-select" id="priority">
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                                <option value="low">Low</option>
+                            </select>
                         </div>
-                        <div class="mb-3">
-                            <label for="dueDate" class="form-label">Due Date</label>
-                            <input type="date" class="form-control" id="dueDate" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="estimators" class="form-label">Assign Estimators (comma-separated)</label>
-                            <input type="text" class="form-control" id="estimators" placeholder="e.g., John Doe, Jane Smith">
-                        </div>
-                        <div class="mb-3">
-                            <label for="itb" class="form-label">ITB (Invitation to Bid)</label>
-                            <textarea class="form-control" id="itb" rows="2"></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label for="rfi" class="form-label">RFI (Request for Information)</label>
-                            <textarea class="form-control" id="rfi" rows="2"></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label for="plans" class="form-label">Plans/Deliverables</label>
-                            <textarea class="form-control" id="plans" rows="3"></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label for="status" class="form-label">Status</label>
+                        <div class="mb-3"><label class="form-label">ITB</label><textarea class="form-control" id="itb" rows="2"></textarea></div>
+                        <div class="mb-3"><label class="form-label">RFI</label><textarea class="form-control" id="rfi" rows="2"></textarea></div>
+                        <div class="mb-3"><label class="form-label">Plans/Deliverables</label><textarea class="form-control" id="plans" rows="3"></textarea></div>
+                        <div class="mb-3"><label class="form-label">Status</label>
                             <select class="form-select" id="status">
                                 <option value="pending">Pending</option>
                                 <option value="assigned">Assigned</option>
@@ -145,10 +131,8 @@
         </div>
     </div>
 
-    <!-- FullCalendar JS -->
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
-    
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
@@ -156,24 +140,14 @@
             const calendarEl = document.getElementById('calendar');
             const statusFilter = document.getElementById('statusFilter');
             const estimatorFilter = document.getElementById('estimatorFilter');
-            
-            let allEstimators = new Set(); // To track unique estimator names
+            let allEstimators = new Set();
 
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 editable: true,
                 themeSystem: 'bootstrap5',
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,listWeek'
-                },
-                buttonText: {
-                    today: 'Today',
-                    month: 'Month',
-                    week: 'Week',
-                    list: 'List'
-                },
+                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listWeek' },
+                buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'List' },
                 eventBackgroundColor: '#3788d8',
                 eventBorderColor: '#2c3e50',
                 eventTextColor: '#ffffff',
@@ -181,82 +155,48 @@
                 aspectRatio: 1.8,
                 nowIndicator: true,
                 events: loadEvents(),
-                dateClick: function(info) {
-                    openModal(info.dateStr);
-                },
-                eventClick: function(info) {
-                    openModal(info.event.startStr, info.event);
-                },
-                eventDrop: function(info) {
-                    updateEvent(info.event);
-                }
+                dateClick: info => openModal(info.dateStr),
+                eventClick: info => openModal(info.event.startStr, info.event),
+                eventDrop: info => updateEvent(info.event)
             });
-            
             calendar.render();
 
-            // Populate estimator dropdown with existing names
             function updateEstimatorOptions() {
                 const select = estimatorFilter;
-                // Clear existing options except the first two
-                while (select.options.length > 2) {
-                    select.remove(2);
-                }
-                // Sort and add unique names
-                const sorted = Array.from(allEstimators).sort((a, b) => a.localeCompare(b));
-                sorted.forEach(name => {
-                    const option = document.createElement('option');
-                    option.value = name;
-                    option.textContent = name;
-                    select.appendChild(option);
+                while (select.options.length > 2) select.remove(2);
+                Array.from(allEstimators).sort((a,b) => a.localeCompare(b)).forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = opt.textContent = name;
+                    select.appendChild(opt);
                 });
             }
 
-            // Apply both filters
             function applyFilters() {
-                const selectedStatus = statusFilter.value;
-                const selectedEstimator = estimatorFilter.value;
+                const statusVal = statusFilter.value;
+                const estVal = estimatorFilter.value;
 
                 calendar.getEvents().forEach(event => {
-                    const eventStatus = event.extendedProps.status || 'pending';
-                    const eventEstimators = (event.extendedProps.estimators || '')
-                        .split(',')
-                        .map(e => e.trim())
-                        .filter(e => e);
+                    const estList = (event.extendedProps.estimators || '').split(',').map(e => e.trim()).filter(e => e);
+                    const statusMatch = statusVal === 'all' || event.extendedProps.status === statusVal;
+                    let estMatch = true;
+                    if (estVal === 'unassigned') estMatch = estList.length === 0;
+                    else if (estVal !== 'all') estMatch = estList.includes(estVal);
 
-                    const matchesStatus = selectedStatus === 'all' || eventStatus === selectedStatus;
-                    
-                    let matchesEstimator = true;
-                    if (selectedEstimator === 'unassigned') {
-                        matchesEstimator = eventEstimators.length === 0;
-                    } else if (selectedEstimator !== 'all') {
-                        matchesEstimator = eventEstimators.includes(selectedEstimator);
-                    }
-
-                    if (matchesStatus && matchesEstimator) {
-                        event.setProp('display', 'auto');
-                    } else {
-                        event.setProp('display', 'none');
-                    }
+                    event.setProp('display', (statusMatch && estMatch) ? 'auto' : 'none');
                 });
             }
 
-            // Event listeners for filters
-            statusFilter.addEventListener('change', applyFilters);
-            estimatorFilter.addEventListener('change', applyFilters);
-
-            // Initial filter apply and estimator options
-            function refreshFiltersAndOptions() {
+            function refreshFilters() {
                 allEstimators.clear();
-                calendar.getEvents().forEach(event => {
-                    const ests = (event.extendedProps.estimators || '')
-                        .split(',')
-                        .map(e => e.trim())
-                        .filter(e => e);
-                    ests.forEach(est => allEstimators.add(est));
+                calendar.getEvents().forEach(ev => {
+                    (ev.extendedProps.estimators || '').split(',').map(e => e.trim()).filter(e => e).forEach(e => allEstimators.add(e));
                 });
                 updateEstimatorOptions();
                 applyFilters();
             }
+
+            statusFilter.addEventListener('change', applyFilters);
+            estimatorFilter.addEventListener('change', applyFilters);
 
             const modal = new bootstrap.Modal(document.getElementById('projectModal'));
             const form = document.getElementById('projectForm');
@@ -267,108 +207,75 @@
                 form.reset();
                 document.getElementById('dueDate').value = dateStr;
                 document.getElementById('eventId').value = event ? event.id : '';
-                
                 if (event) {
                     document.getElementById('projectTitle').value = event.title;
                     document.getElementById('estimators').value = event.extendedProps.estimators || '';
+                    document.getElementById('priority').value = event.extendedProps.priority || 'medium';
                     document.getElementById('itb').value = event.extendedProps.itb || '';
                     document.getElementById('rfi').value = event.extendedProps.rfi || '';
                     document.getElementById('plans').value = event.extendedProps.plans || '';
                     document.getElementById('status').value = event.extendedProps.status || 'pending';
                     deleteBtn.style.display = 'block';
                 } else {
+                    document.getElementById('priority').value = 'medium';
                     deleteBtn.style.display = 'none';
                 }
                 modal.show();
             }
 
-            saveBtn.addEventListener('click', function() {
+            saveBtn.onclick = function() {
                 const id = document.getElementById('eventId').value || Date.now().toString();
                 const title = document.getElementById('projectTitle').value.trim();
                 const start = document.getElementById('dueDate').value;
-                const estimators = document.getElementById('estimators').value.trim();
-                const itb = document.getElementById('itb').value.trim();
-                const rfi = document.getElementById('rfi').value.trim();
-                const plans = document.getElementById('plans').value.trim();
-                const status = document.getElementById('status').value;
+                if (!title || !start) return alert('Title and Due Date required!');
 
-                if (!title || !start) {
-                    alert('Project Title and Due Date are required!');
-                    return;
-                }
+                const priority = document.getElementById('priority').value;
 
                 const eventData = {
-                    id: id,
-                    title: title,
-                    start: start,
-                    classNames: [`event-${status}`],
+                    id, title, start,
+                    classNames: [`event-${document.getElementById('status').value}`, `priority-${priority}`],
                     extendedProps: {
-                        estimators: estimators,
-                        itb: itb,
-                        rfi: rfi,
-                        plans: plans,
-                        status: status
+                        estimators: document.getElementById('estimators').value.trim(),
+                        priority: priority,
+                        itb: document.getElementById('itb').value.trim(),
+                        rfi: document.getElementById('rfi').value.trim(),
+                        plans: document.getElementById('plans').value.trim(),
+                        status: document.getElementById('status').value
                     }
                 };
 
-                const existingEvent = calendar.getEventById(id);
-                if (existingEvent) {
-                    existingEvent.remove();
-                }
-                
+                const existing = calendar.getEventById(id);
+                if (existing) existing.remove();
                 calendar.addEvent(eventData);
                 saveEvents(calendar.getEvents());
                 modal.hide();
+                refreshFilters();
+            };
 
-                // Refresh filters and estimator list
-                refreshFiltersAndOptions();
-            });
-
-            deleteBtn.addEventListener('click', function() {
-                if (confirm('Are you sure you want to delete this project?')) {
-                    const id = document.getElementById('eventId').value;
-                    const event = calendar.getEventById(id);
-                    if (event) event.remove();
+            deleteBtn.onclick = function() {
+                if (confirm('Delete this project?')) {
+                    calendar.getEventById(document.getElementById('eventId').value).remove();
                     saveEvents(calendar.getEvents());
                     modal.hide();
-                    
-                    // Refresh filters and estimator list
-                    refreshFiltersAndOptions();
+                    refreshFilters();
                 }
-            });
+            };
 
             function loadEvents() {
                 const saved = localStorage.getItem('bidEvents');
-                if (!saved) return [];
-                
-                const parsed = JSON.parse(saved);
-                return parsed.map(ev => ({
-                    id: ev.id,
-                    title: ev.title,
-                    start: ev.start,
-                    classNames: ev.classNames,
-                    extendedProps: ev.extendedProps
-                }));
+                return saved ? JSON.parse(saved).map(ev => ({...ev, classNames: ev.classNames || [], extendedProps: ev.extendedProps || {}})) : [];
             }
 
             function saveEvents(events) {
-                const cleanEvents = events.map(e => ({
-                    id: e.id,
-                    title: e.title,
-                    start: e.start.toISOString().split('T')[0],
-                    classNames: e.classNames,
-                    extendedProps: e.extendedProps
-                }));
-                localStorage.setItem('bidEvents', JSON.stringify(cleanEvents));
+                localStorage.setItem('bidEvents', JSON.stringify(events.map(e => ({
+                    id: e.id, title: e.title, start: e.start.toISOString().split('T')[0],
+                    classNames: e.classNames, extendedProps: e.extendedProps
+                }))));
             }
 
-            function updateEvent(event) {
-                saveEvents(calendar.getEvents());
-                refreshFiltersAndOptions();
-            }
+            function updateEvent() { saveEvents(calendar.getEvents()); refreshFilters(); }
 
-            // Initial setup
-            refreshFiltersAndOptions();
+            refreshFilters();
         });
     </script>
 </body>
