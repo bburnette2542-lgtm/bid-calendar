@@ -138,9 +138,14 @@
     <script>
         // === PASTE YOUR FIREBASE CONFIG HERE ===
         const firebaseConfig = {
-          // Your config from Part 3 goes here
-        };
-        // =======================================
+                  apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+                  authDomain: "your-project-name.firebaseapp.com",
+                  databaseURL: "https://your-project-name-default-rtdb.firebaseio.com",
+                  projectId: "your-project-name",
+                  storageBucket: "your-project-name.appspot.com",
+                  messagingSenderId: "123456789012",
+                  appId: "1:123456789012:web:abcdef1234567890"
+};
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
@@ -299,3 +304,4 @@
     </script>
 </body>
 </html>
+
