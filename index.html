@@ -81,12 +81,12 @@
     </div>
 
     <!-- Modal -->
-    <div class="modal fade" id="projectModal" tabindex="-1">
+    <div class="modal fade" id="projectModal" tabindex="-1" aria-labelledby="projectModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">Add/Edit Project</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="projectModalLabel">Add/Edit Project</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form id="projectForm">
@@ -136,172 +136,11 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // === PASTE YOUR FIREBASE CONFIG HERE ===
+        // Your Firebase config (paste it here exactly as you copied)
         const firebaseConfig = {
-                  apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-                  authDomain: "your-project-name.firebaseapp.com",
-                  databaseURL: "https://your-project-name-default-rtdb.firebaseio.com",
-                  projectId: "your-project-name",
-                  storageBucket: "your-project-name.appspot.com",
-                  messagingSenderId: "123456789012",
-                  appId: "1:123456789012:web:abcdef1234567890"
-};
-
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const eventsRef = db.ref('events');
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const calendarEl = document.getElementById('calendar');
-            const statusFilter = document.getElementById('statusFilter');
-            const estimatorFilter = document.getElementById('estimatorFilter');
-            const scopeFilter = document.getElementById('scopeFilter');
-            let allEstimators = new Set();
-
-            const calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                editable: true,
-                themeSystem: 'bootstrap5',
-                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listWeek' },
-                buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'List' },
-                eventBackgroundColor: '#3788d8',
-                eventBorderColor: '#2c3e50',
-                eventTextColor: '#ffffff',
-                height: 'auto',
-                aspectRatio: 1.35,
-                nowIndicator: true,
-                dateClick: info => openModal(info.dateStr),
-                eventClick: info => openModal(info.event.startStr, info.event),
-                eventDrop: info => updateEvent(info.event)
-            });
-            calendar.render();
-
-            // Load events from Firebase
-            eventsRef.on('value', snapshot => {
-                const data = snapshot.val() || {};
-                const events = Object.keys(data).map(key => ({
-                    id: key,
-                    title: data[key].title,
-                    start: data[key].start,
-                    classNames: data[key].classNames || [],
-                    extendedProps: data[key].extendedProps || {}
-                }));
-                calendar.removeAllEvents();
-                calendar.addEventSource(events);
-                refreshFilters();
-            });
-
-            function updateEstimatorOptions() {
-                const select = estimatorFilter;
-                while (select.options.length > 2) select.remove(2);
-                Array.from(allEstimators).sort((a,b) => a.localeCompare(b)).forEach(name => {
-                    const opt = document.createElement('option');
-                    opt.value = opt.textContent = name;
-                    select.appendChild(opt);
-                });
-            }
-
-            function applyFilters() {
-                const statusVal = statusFilter.value;
-                const estVal = estimatorFilter.value;
-                const scopeVal = scopeFilter.value;
-
-                calendar.getEvents().forEach(event => {
-                    const estList = (event.extendedProps.estimators || '').split(',').map(e => e.trim()).filter(e => e);
-                    const eventScope = event.extendedProps.scope || '';
-                    const statusMatch = statusVal === 'all' || event.extendedProps.status === statusVal;
-                    let estMatch = true;
-                    if (estVal === 'unassigned') estMatch = estList.length === 0;
-                    else if (estVal !== 'all') estMatch = estList.includes(estVal);
-                    const scopeMatch = scopeVal === 'all' || eventScope === scopeVal;
-
-                    event.setProp('display', (statusMatch && estMatch && scopeMatch) ? 'auto' : 'none');
-                });
-            }
-
-            function refreshFilters() {
-                allEstimators.clear();
-                calendar.getEvents().forEach(ev => {
-                    (ev.extendedProps.estimators || '').split(',').map(e => e.trim()).filter(e => e).forEach(e => allEstimators.add(e));
-                });
-                updateEstimatorOptions();
-                applyFilters();
-            }
-
-            statusFilter.addEventListener('change', applyFilters);
-            estimatorFilter.addEventListener('change', applyFilters);
-            scopeFilter.addEventListener('change', applyFilters);
-
-            const modal = new bootstrap.Modal(document.getElementById('projectModal'));
-            const form = document.getElementById('projectForm');
-            const saveBtn = document.getElementById('saveBtn');
-            const deleteBtn = document.getElementById('deleteBtn');
-
-            function openModal(dateStr, event = null) {
-                form.reset();
-                document.getElementById('dueDate').value = dateStr;
-                document.getElementById('eventId').value = event ? event.id : '';
-                if (event) {
-                    document.getElementById('projectTitle').value = event.title;
-                    document.getElementById('estimators').value = event.extendedProps.estimators || '';
-                    document.getElementById('scope').value = event.extendedProps.scope || 'masonry';
-                    document.getElementById('itb').value = event.extendedProps.itb || '';
-                    document.getElementById('rfi').value = event.extendedProps.rfi || '';
-                    document.getElementById('plans').value = event.extendedProps.plans || '';
-                    document.getElementById('status').value = event.extendedProps.status || 'pending';
-                    deleteBtn.style.display = 'block';
-                } else {
-                    document.getElementById('scope').value = 'masonry';
-                    deleteBtn.style.display = 'none';
-                }
-                modal.show();
-            }
-
-            saveBtn.onclick = function() {
-                const id = document.getElementById('eventId').value;
-                const title = document.getElementById('projectTitle').value.trim();
-                const start = document.getElementById('dueDate').value;
-                if (!title || !start) return alert('Title and Due Date required!');
-
-                const scope = document.getElementById('scope').value;
-                const status = document.getElementById('status').value;
-
-                const eventData = {
-                    title: title,
-                    start: start,
-                    classNames: [`event-${status}`, `scope-${scope}`],
-                    extendedProps: {
-                        estimators: document.getElementById('estimators').value.trim(),
-                        scope: scope,
-                        itb: document.getElementById('itb').value.trim(),
-                        rfi: document.getElementById('rfi').value.trim(),
-                        plans: document.getElementById('plans').value.trim(),
-                        status: status
-                    }
-                };
-
-                if (id) {
-                    eventsRef.child(id).update(eventData);
-                } else {
-                    eventsRef.push(eventData);
-                }
-
-                modal.hide();
-            };
-
-            deleteBtn.onclick = function() {
-                if (confirm('Delete this project?')) {
-                    const id = document.getElementById('eventId').value;
-                    eventsRef.child(id).remove();
-                    modal.hide();
-                }
-            };
-
-            function updateEvent() {
-                // No need - real-time listener handles updates
-            }
-        });
-    </script>
-</body>
-</html>
-
+          apiKey: "AIzaSyChkRNdBjtkEU04RgveugNHhy6CAF4XyYU",
+          authDomain: "jre-bid-calendar.firebaseapp.com",
+          databaseURL: "https://jre-bid-calendar-default-rtdb.firebaseio.com",
+          projectId: "jre-bid-calendar",
+          storageBucket: "jre-bid-calendar.appspot.com",
+          messagingSenderId: "781196
