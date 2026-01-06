@@ -100,7 +100,13 @@
                 eventClick: function(info) {
                     openModal(info.event.startStr, info.event);
                 },
-                eventDrop: function(info) {
+                eventDrop: function(info) {    themeSystem: 'bootstrap5',
+                eventBackgroundColor: '#3788d8',
+                eventBorderColor: '#2c3e50',
+                eventTextColor: '#ffffff',
+                height: 'auto',
+                aspectRatio: 1.8,
+                nowIndicator: true,
                     updateEvent(info.event);
                 }
             });
@@ -190,3 +196,4 @@
     </script>
 </body>
 </html>
+
